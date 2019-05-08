@@ -31,7 +31,7 @@ def getWebsURLs(url):
     return(["/".join(url.split("/")[:-1]) + "/" + x.div.a.get('href') for x in soup.findAll("a", class_ = "container")])
 
 categories_urls = [main_url + x.get('href') for x in soup.find_all("a", href=re.compile("a"))]
-categories_urls = categories_urls[1:] # we remove the first one because it corresponds to all the books
+categories_urls = categories_urls[1:] 
 
 print(str(len(categories_urls)) + " fetched  URLs")
 print("Some examples:")
