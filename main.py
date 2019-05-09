@@ -47,6 +47,41 @@ while(1):
     time.sleep(1)
   
 
+for i in page_key:
+    if i in words:
+        foo = words[i] ['location']
+        words [i] ['frequency'] +=i
+        words [i] ['location'] = foo + "," + link
+    if i not in words:
+        words[i] = {}
+        words[i] ['frequency'] = 1
+        words[i] ['location'] = link
+
+
+    def save(link):
+
+        results = []
+        results = datacollection(link)
+
+        page_key = []
+        for key in results.keys():
+            page_key.append(key)
+        for value in results.values():
+            page_key.append(value)
+
+
+    def build(num):
+        initialpage(url)
+        next1= "http://example.webscraping.com" +links[-1]
+        pages(next1)
+        prev = ""
+        count2 = 0
+        x = True
+
+    while count2 <= num:
+        print(count2)
+        time.sleep(1)
+
 
 class Spider(scrapy.Spider): 
       
@@ -77,7 +112,6 @@ for link in href_links:
                 print(all_links)
                 end = time.time()
                 print("Time taken in seconds : ", (end-start))
-
 
 
 
