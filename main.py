@@ -1,56 +1,118 @@
-
 from bs4 import BeautifulSoup
-import requests
-import re
+from selenium import webdriver 
+import scrapy 
+from parsel import Selector
+from scrapy.spiders import CrawlSpider, Rule
+from scrapy.linkextractors import LinkExtractor
+import time
+start = time.time()
+  
+# importing requests 
+import requests 
 
-
-
-
-
-main_url= "http://example.webscraping.com/"
-result = requests.get(main_url)
-
-soup = BeautifulSoup(result.text, 'html.parser')
-def getAndParseURL(url):
-    result = requests.get(url)
-    soup = BeautifulSoup(result.text, 'html.parser')
-    return(soup)
-
+def getAndParseURL(result):
+    #result = requests.get(url)
+    soup = BeautifulSoup(result, 'html.parser')
     
-soup.find("a", class_ = "container") .div.a.get('href')
+    child = soup.find_all('a')
+    for i in range(0, len(child)):
+        if 'Next' in child[i].get_text():
+            nextlink = child[i]['href']
+            print(nextlink)
+            return(nextlink)
+    return None
 
-main_page_urls = [x.div.a.get('href') for x in soup.findAll("a", class_ = "container")]
+all_links = []
+base_path = 'http://example.webscraping.com'
+response = requests.get(base_path)
+selector = Selector(response.text)
+href_links = selector.xpath('//a/@href').getall()
+all_links += href_links
+# get URL 
+r = requests.get("http://example.webscraping.com/") 
+next = ''
+#data = r.text 
+#soup = BeautifulSoup(data) 
+#table =  soup.findAll('td')
+while(1):
+    r = requests.get("http://example.webscraping.com/"+next) 
 
-print(str(len(main_page_products_urls)) + " fetched  URLs")
-print("One example:")
-main_page_urls[0]
+    data = r.text 
+    soup = BeautifulSoup(data) 
+    for link in soup.find_all('td'): 
+        print(link.find('a')['href'])
+    next = getAndParseURL(r.text)
+    if next == None:
+        break
+    time.sleep(1)
+  
 
-def getWebsURLs(url):
-    soup = getAndParseURL(url)
-    # remove the index.html part of the base url before returning the results
-    return(["/".join(url.split("/")[:-1]) + "/" + x.div.a.get('href') for x in soup.findAll("a", class_ = "container")])
 
-categories_urls = [main_url + x.get('href') for x in soup.find_all("a", href=re.compile("a"))]
-categories_urls = categories_urls[1:] 
+class Spider(scrapy.Spider): 
+      
+    name = "crawl_spider"
+      
+    start_urls = 'http://example.webscraping.com/'
+      
+    # Parse function 
+    def parse(self, response): 
+          
+        SET_SELECTOR = 'crawler'
+        for geek in response.css(SET_SELECTOR): 
+            pass
 
-print(str(len(categories_urls)) + " fetched  URLs")
-print("Some examples:")
-categories_urls[:5]
 
-pages_urls = [main_url]
-soup = getAndParseURL(pages_urls[0])
 
-while len(soup.findAll("a", href=re.compile("page"))) == 2 or len(pages_urls) == 1:
- 
 
-new_url = "/".join(pages_urls[-1].split("/")[:-1]) + "/" + soup.findAll("a", href=re.compile("page"))[-1].get("href")
+for link in href_links:
+    try:
+        response = requests.get(base_path + link)
+        selector = Selector(response.text)
+        href_links_2 = selector.xpath('//a/@href').getall()
+        all_links += href_links_2
+        if len(all_links) >=10:
+            break
+    except Exception as exp:
+                print('Error navigating to link : ', link)
+                print(all_links)
+                end = time.time()
+                print("Time taken in seconds : ", (end-start))
 
- # add the URL to the list
-    pages_urls.append(new_url)
+
+
+
+
+#ink = '<div id="pagination"><a href="/places/default/index/0">&lt; Previous</a><br><a href="/places/default/index/1">Next &gt;</a></div>'
+#soup = BeautifulSoup(link, 'html.parser')
+
+
+#pages_urls = [start_urls]
+
+#soup = getAndParseURL(pages_urls[0])
+
+# while we get two matches, this means that the webpage contains a 'previous' and a 'next' button
+# if there is only one button, this means that we are either on the first page or on the last page
+# we stop when we get to the last page
+
+#while len(soup.findAll("a", href=re.compile("page"))) == 2 or len(pages_urls) == 1:
+    
+    # get the new complete url by adding the fetched URL to the base URL (and removing the .html part of the base URL)
+    #new_url = "/".join(pages_urls[-1].split("/")[:-1]) + "/" + soup.findAll("a", href=re.compile("page"))[-1].get("href")
+    
+    # add the URL to the list
+    #pages_urls.append(new_url)
     
     # parse the next page
-    soup = getAndParseURL(new_url)
+    #soup = getAndParseURL(new_url)
     
-    print(str(len(pages_urls)) + " fetched URLs")
-    print("Some examples:")
-    pages_urls[:25]
+#pages_urls = []
+
+#new_page = "http://example.webscraping.com/places/default/index/2"
+#while requests.get(new_page).status_code == 200:
+    #pages_urls.append(new_page)
+    #new_page = pages_urls[-1].split("-")[0] + "-" + str(int(pages_urls[-1].split("-")[1].split(".")[0]) + 1) + ".html"
+
+#print(str(len(pages_urls)) + " fetched URLs")
+#print("Some examples:")
+#pages_urls[:25]
+
