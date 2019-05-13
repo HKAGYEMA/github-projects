@@ -22,7 +22,7 @@ def getAndParseURL(result):
             print(nextlink)
             return(nextlink)
     return None
-
+    diction = {'location': "www.page.com/1", 'freq': "0"}
     r = requests.get("http://example.webscraping.com/places/default/view/Aland-Islands-2") 
     soup = BeautifulSoup(r, 'html.parser')
     
