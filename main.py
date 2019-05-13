@@ -68,4 +68,4 @@ def country_data(string):
   sortSite.sort()
   return sortSite
 
-print(country_data('http://example.webscraping.com/places/default/view/Andorra-6'))
+print(country_data('http://example.webscraping.com/places/default/view/Afghanistan-1'))
