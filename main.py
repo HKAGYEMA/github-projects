@@ -1,30 +1,18 @@
-
+from bs4 import BeautifulSoup
 from selenium import webdriver 
 import scrapy 
 from parsel import Selector
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 import time
-import requests
-from bs4 import BeautifulSoup
 start = time.time()
-import json
-  
+import requests 
+
+
 
 def getAndParseURL(result):
     #result = requests.get(url)
     soup = BeautifulSoup(result, 'html.parser')
-    
-    child = soup.find_all('a')
-    for i in range(0, len(child)):
-        if 'Next' in child[i].get_text():
-            nextlink = child[i]['href']
-            print(nextlink)
-            return(nextlink)
-    return None
-    diction = {'location': "www.page.com/1", 'freq': "0"}
-    r = requests.get("http://example.webscraping.com/places/default/view/Aland-Islands-2") 
-    soup = BeautifulSoup(r, 'html.parser')
     
     child = soup.find_all('a')
     for i in range(0, len(child)):
@@ -57,17 +45,27 @@ while(1):
     if next == None:
         break
     time.sleep(1)
+  
+def country_data(string):
+  page = requests.get(string)
+  soup = BeautifulSoup(page.text, 'html.parser')
+  site = ""
+  results = soup.find_all('tr')
+  i = 0
+  for result in results:
+    table_data = result.findAll('td')
+    soup2 = BeautifulSoup(table_data[1].text, 'html.parser')
+    if len(soup2.get_text().replace(" ","")) == 0:
+      continue
+    site += " "+soup2.get_text()
+    i = 1+i
+    print("",soup2.get_text(),"")
+  ### Remove empty things and sort them
+  sortSite = site.split(" ")
+  for i in range(0, len(sortSite)-1):
+    if sortSite[i] == '':
+      sortSite.pop(i)
+  sortSite.sort()
+  return sortSite
 
-    string = []
-    for i in string:
-        if i in diction:
-            diction[i]['location'] = url 
-            diction[i]['freq'] += 1
-        else:
-                userin = input().split()
-        if userin[0] == ('print'):
-                    printterm = userin[1]
-    
-
-
-
+print(country_data('http://example.webscraping.com/places/default/view/Andorra-6'))
