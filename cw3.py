@@ -1,15 +1,8 @@
-
-#import scrapy 
-#from parsel import Selector
-#from scrapy.spiders import CrawlSpider, Rule
-#from scrapy.linkextractors import LinkExtractor
-import time
-import requests
 from bs4 import BeautifulSoup
-start = time.time()
-  
-inverted_index = {}
-def getAndParseURL(result):
+import requests
+from time import sleep
+
+def getNext(result):
     #result = requests.get(url)
     soup = BeautifulSoup(result, 'html.parser')
     
@@ -17,53 +10,48 @@ def getAndParseURL(result):
     for i in range(0, len(child)):
         if 'Next' in child[i].get_text():
             nextlink = child[i]['href']
-            print(nextlink)
             return(nextlink)
     return None
 
-all_links = []
-base_path = 'http://example.webscraping.com'
-response = requests.get(base_path)
-selector = Selector(response.text)
-href_links = selector.xpath('//a/@href').getall()
-all_links += href_links
-# get URL 
-r = requests.get("http://example.webscraping.com/") 
-next = ''
-#data = r.text 
-#soup = BeautifulSoup(data) 
-#table =  soup.findAll('td')
-while(1):
-    r = requests.get("http://example.webscraping.com/"+next) 
+def country_data(string):
+    page = requests.get(string)
+    soup = BeautifulSoup(page.text, 'html.parser')
+    site = ""
+    results = soup.find_all('tr')
+    i = 0
+    for result in results:
+        table_data = result.findAll('td')
+        soup2 = BeautifulSoup(table_data[1].text, 'html.parser')
+        #skip empty strings
+        if len(soup2.get_text().replace(" ","")) == 0:
+            continue
+        site += " "+soup2.get_text()
+        i = 1+i
+    # Remove empty things and sort them
+    sortSite = site.split(" ")
+    for i in range(1, len(sortSite)-1):
+        if sortSite[i] == '':
+            sortSite.pop(i)
+    sortSite.sort()
+    return sortSite
 
-    data = r.text 
-    soup = BeautifulSoup(data) 
-    for link in soup.find_all('td'): 
-        print(link.find('a')['href'])
-    next = getAndParseURL(r.text)
-    if next == None:
-        break
-    time.sleep(1)
 
-    for link in all_links:
-        if 'places/default/edit' not in link: #ignore edit pages
-            print('scraping' + link)
-            link_source = requests.get(base_path + link) .text
-            link_soup = BeautifulSoup(link_source, 'lxml')
-    for row in link_soup.find_all('td', class_ ='w2p_fw'):
-        word = row.text.strip()
-        if word is not '':
+def run():
+    nav = "" # used to navigate the website
+    # Get the information from the web 
+    link = 'http://example.webscraping.com/'
+    while(1):
+        page = requests.get('http://example.webscraping.com/'+nav)
+        # Now get a list of all the countries
+        soup = BeautifulSoup(page.text, 'html.parser')
+        results = soup.find_all('td')
+        for result in results:
+            sleep(1)
+            country = result.findChildren("a")
+            print(country_data(link+country[0]['href']))
+        nav = getNext(page.text)
+        #print(page.text)
+        if nav == None:
+            break
 
-            if word not in inverted_index:
-                inverted_index.update({word:{link:1}})
-            elif link in inverted_index[word]:
-                inverted_index[word][link] +=1
-            else:
-                inverted_index[word].update({link:1})
-
-    for link in link_soup.find_all('a'):
-        if 'places/default/user' not in link['href'] and link['href'] not in all_links:
-            all_links.append(link['href'])
-    time.sleep(5)
-    #return inverted_index
- 
+run()
