@@ -2,6 +2,9 @@ from bs4 import BeautifulSoup
 import requests
 from time import sleep
 import numpy
+import json
+
+
 global index, iMap
 index = []
 iMap = []
@@ -87,25 +90,25 @@ def run():
             invert(link+country[0]['href'], data)
             print('* Success *',country[0]['href'])
         nav = getNext(page.text)
-        #print(page.text)
         if nav == None:
             break
     return iMap,index
-
-maps,index = run()
-for row in maps:
-    for i in range(len(row[1]),len(index)):
+#'''
+def build():
+    maps,index = run()
+    # Load into a json file
+    for row in maps:
+      for i in range(len(row[1]),len(index)):
         row[1].append(0)
-inp = 'Dollar'
-if inp not in index:
-    print(index)
-    print('not in the index')
-else:
-    i = index.index(inp)
-    #going through all the rows look for matching word
-    for j in range(len(maps)):
-        #print(index,'\n',maps[j][1], i)
-        if maps[j][1][i] > 0:
-            print('Site:\t',maps[j][0],'\nTimes:\t', maps[j][1][i])
-
-#print (maps)
+    x={}
+    for i in range(len(index)):
+        lst = []
+        for j in maps:
+            if j[1][i] > 0:
+                lst.append(format("%s, %d" % (j[0],j[1][i])))
+        x.update({index[i]: lst})
+        # convert into JSON:
+        with open('Countries.json','w') as f:
+            f.write(json.dumps(x,sort_keys=True, indent=2))
+            # the result is a JSON string:
+build()
