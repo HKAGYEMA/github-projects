@@ -8,8 +8,9 @@ import json
 global index, iMap
 index = []
 iMap = []
+
+## Get the links for the next page in the website
 def getNext(result):
-    #result = requests.get(url)
     soup = BeautifulSoup(result, 'html.parser')
     
     child = soup.find_all('a')
@@ -19,28 +20,27 @@ def getNext(result):
             return(nextlink)
     return None
 
+## Get the data from the country specific page
 def country_data(string):
     page = requests.get(string)
     soup = BeautifulSoup(page.text, 'html.parser')
     site = ""
-    results = soup.find_all('tr')
-    i = 0
+    results = soup.find_all('td')
+
     for result in results:
-        table_data = result.findAll('td')
-        soup2 = BeautifulSoup(table_data[1].text, 'html.parser')
-        #skip empty strings
-        if len(soup2.get_text().replace(" ","")) == 0:
+
+        if len(result.text.replace(" ","")) == 0:
             continue
-        site += " "+soup2.get_text()
-        i = 1+i
+        site += " "+result.text.replace(":","")
+
     # Remove empty things and sort them
     sortSite = site.split(" ")
-    while '' not in sortSite:#for i in range(0, len(sortSite)-1):
+    while '' not in sortSite:
         sortSite.remove('')
-            #sortSite.pop(i)
     sortSite.sort()
     return sortSite
 
+## Do the inverted index in the form of a table to keep a track of each word
 def invert(link,result):
     global index
     global iMap
@@ -72,8 +72,8 @@ def invert(link,result):
                 index.append(result[y])        
         iMap.append([link,tmp])
     x+=1
-    #print(index, iMap)
 
+# 
 def run():
     nav = "" # used to navigate the website
     # Get the information from the web 
@@ -106,15 +106,18 @@ def build():
         lst = []
         for j in maps:
             if j[1][i] > 0:
-                lst.append(format('{"Site":"%s","Count":%d}' % (j[0],j[1][i])))
+                lst.append([j[0],j[1][i]])
+        #lstS = {lst}
         x.update({index[i]: lst})
         # convert into JSON:
         with open('Countries.json','w') as f:
-            print('Build')
             f.write(json.dumps(x,sort_keys=True, indent=2))
             # the result is a JSON string:
+
+# Read the file from json and load it  
 def load():
     datastore = None
+    # create and build if the file is not there
     try:
         with open('Countries.json') as jsn:
             datastore = json.load(jsn)
@@ -124,25 +127,54 @@ def load():
         with open('Countries.json') as jsn:
             datastore = json.load(jsn)
     return datastore
-def find(word):
-    print()
 
+## Find two words which can be seen in multiple files
+def find(word1,word2):
+    lines = load()
+    matches = 0
+    try:
+        specific1 = lines[word1]
+        specific2 = lines[word2]
+        print('[',word1,"] and [", word2,']')
+        for line1 in specific1:
+            if line1 in specific2:
+                matches = 1
+                print('\t',line1)
+        if matches == 0:
+            print('No match found for [',word1,'&',word2,']')
+    except KeyError:
+        print("Word Does not exist in dataset")
+
+def cPrint(words):
+    lines = load()
+    try:
+        specific = lines[words]
+        print(words)
+        for line in specific:
+            print('\t',line[0])
+    except KeyError:
+        print("Word Does not exist in dataset")
 # Menu for User
 if __name__ == "__main__":
     while(1):
+        print("#################################")
         print("Enter one of the Listed commands:\n")
-        print("[1]Build\n[2]Load\n[3]Find\n[4]Exit")
+        print("[*]Build\n[*]Load\n[*]Print\n[*]Find\n[*]Exit")
         usrIn = input("Enter option: ")
-        print(usrIn.lower())
+        #print(usrIn.lower())
         if usrIn.lower() == 'build':
             build()
         elif usrIn.lower() == 'load':
             print(load())
+        elif usrIn.lower() == 'print':
+            word = input("Enter the word to search 4: ")
+            cPrint(word)
         elif usrIn.lower() == 'find':
-            usrFind = input('Enter text to search for')
-            print(find(usrFind))
+            usrFind = input('Enter words to search for\n E.g."Dollar AF":')
+            usrFind = usrFind.split(" ")
+            if len(usrFind) == 2:
+                find(usrFind[0], usrFind[1])
         elif usrIn.lower()=='exit':
             break
         else:
             print('Please enter the right command according to the menu\n')
-    #'''
