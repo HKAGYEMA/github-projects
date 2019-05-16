@@ -96,19 +96,53 @@ def run():
 #'''
 def build():
     maps,index = run()
-    # Load into a json file
+    # Now add zeros to the index words left out
     for row in maps:
-      for i in range(len(row[1]),len(index)):
-        row[1].append(0)
+        for i in range(len(row[1]),len(index)):
+            row[1].append(0)
+    # Load into a json file
     x={}
     for i in range(len(index)):
         lst = []
         for j in maps:
             if j[1][i] > 0:
-                lst.append(format("%s, %d" % (j[0],j[1][i])))
+                lst.append(format('{"Site":"%s","Count":%d}' % (j[0],j[1][i])))
         x.update({index[i]: lst})
         # convert into JSON:
         with open('Countries.json','w') as f:
+            print('Build')
             f.write(json.dumps(x,sort_keys=True, indent=2))
             # the result is a JSON string:
-build()
+def load():
+    datastore = None
+    try:
+        with open('Countries.json') as jsn:
+            datastore = json.load(jsn)
+    except FileNotFoundError or FileExistsError:
+        print('File does not exist Building now')
+        build()
+        with open('Countries.json') as jsn:
+            datastore = json.load(jsn)
+    return datastore
+def find(word):
+    print()
+
+# Menu for User
+if __name__ == "__main__":
+    while(1):
+        print("Enter one of the Listed commands:\n")
+        print("[1]Build\n[2]Load\n[3]Find\n[4]Exit")
+        usrIn = input("Enter option: ")
+        print(usrIn.lower())
+        if usrIn.lower() == 'build':
+            build()
+        elif usrIn.lower() == 'load':
+            print(load())
+        elif usrIn.lower() == 'find':
+            usrFind = input('Enter text to search for')
+            print(find(usrFind))
+        elif usrIn.lower()=='exit':
+            break
+        else:
+            print('Please enter the right command according to the menu\n')
+    #'''
